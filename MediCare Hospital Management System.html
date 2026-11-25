@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MediCare Hospital Management System</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--tx:#12263a;--mu:#5b6b7b;--pr:#0b7285;--bd:#dbe3ec;--ok:#2b8a3e;--no:#c92a2a;--wa:#e67700;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1720;--card:#18232f;--tx:#e8eef4;--mu:#93a4b5;--pr:#3bc9db;--bd:#2a3846;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1720;--card:#18232f;--tx:#e8eef4;--mu:#93a4b5;--pr:#3bc9db;--bd:#2a3846;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 20px;background:var(--pr);color:#fff}
+.nav b{font-size:1.1rem}.nav button{background:#fff3;color:#fff;border:1px solid #fff6}
+.wrap{max-width:1000px;margin:0 auto;padding:20px}
+.login{min-height:80vh;display:grid;place-items:center;padding:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;padding:9px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+input,select{width:100%;margin-bottom:10px}
+button{cursor:pointer;background:var(--pr);color:#fff;border:0}
+button.ok{background:var(--ok)}button.no{background:var(--no)}button.ghost{background:transparent;color:var(--pr);border:1px solid var(--pr)}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--pr);color:#fff}
+.badge{padding:2px 10px;border-radius:99px;font-size:.8rem;color:#fff}
+.pending{background:var(--wa)}.accepted{background:var(--ok)}.declined{background:var(--no)}
+.item{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--bd)}
+.item:last-child{border:0}.mu{color:var(--mu);font-size:.9rem}
+.slot{padding:6px 10px;border-radius:8px;margin:4px 0;border-left:4px solid}
+.op{border-color:var(--no);background:#c92a2a22}.ap{border-color:var(--ok);background:#2b8a3e22}
+h2,h3{margin:0 0 10px}.err{color:var(--no)}.cred{background:#e6770022;padding:10px;border-radius:8px;margin-top:8px}
+.split{display:flex;min-height:calc(100vh - 56px)}
+.left{flex:1 1 50%;background:linear-gradient(160deg,#0b7285,#0b3d5c);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.left h1{margin:12px 0 0;font-size:2.4rem;letter-spacing:1px}.left p{margin:4px 0 0;opacity:.85}
+.right{flex:1 1 50%;display:flex;flex-direction:column}
+.welcome{flex:1 1 0;padding:20px 32px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--bd)}
+.welcome h2{color:var(--pr);margin-bottom:4px}.welcome p{margin:0;color:var(--mu)}
+.formarea{flex:3 1 0;display:grid;place-items:center;padding:20px}
+@media(max-width:700px){.split{flex-direction:column}.left{padding:32px 16px}}
+.menubtn{margin-bottom:16px}
+.ov{position:fixed;inset:0;background:#0006;z-index:20}
+.side{position:fixed;top:0;left:0;bottom:0;width:270px;max-width:84vw;background:var(--card);border-right:1px solid var(--bd);z-index:21;padding:calc(env(safe-area-inset-top,0px) + 16px) 14px calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;flex-direction:column;gap:6px;transform:translateX(-105%);transition:transform .3s ease;box-shadow:4px 0 24px #0004}
+.side.open{transform:none}
+.side .nv{text-align:left;background:transparent;color:var(--tx);padding:12px}
+.side .nv.on{background:var(--pr);color:#fff}
+.side .who{padding:4px 12px 14px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.side .x{align-self:flex-end;background:transparent;color:var(--mu);padding:2px 8px}
+.side{width:260px;padding:0;gap:0;transform:none;box-shadow:none;transition:width .25s;overflow:hidden;z-index:30}
+.mini .side{width:64px}
+.shell .main{padding-left:260px;transition:padding .25s;min-height:100vh}
+.mini.shell .main{padding-left:64px}
+.side .logo{height:64px;flex:none;background:var(--pr);display:flex;align-items:center;gap:10px;padding:0 17px;color:#fff;font-weight:700;white-space:nowrap}
+.side .logo svg{width:30px;height:35px;flex:none}
+.side .who{padding:12px 20px;border-bottom:1px solid var(--bd);margin:0;white-space:nowrap}
+.side .nv{display:flex;align-items:center;gap:14px;width:100%;border-radius:0;border-bottom:1px solid var(--bd);padding:14px 21px;white-space:nowrap;font-size:.98rem}
+.side .nv svg{flex:none;width:22px;height:22px;stroke:var(--pr);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.side .nv.on{background:#0b728518;color:var(--pr);font-weight:600}
+.side .nv.out svg{stroke:var(--no)}
+.mini .side .nv span,.mini .side .logo span,.mini .side .who{display:none}
+.nav .hb{background:transparent;border:0;padding:2px 10px;font-size:1.5rem;color:#fff}
+@media(max-width:700px){.shell .main,.mini.shell .main{padding-left:64px}}
+</style></head>
+<body><div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const {useState}=React;
+const KEY='hms_v1',SES='hms_me';
+const iso=(n=0)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const seed=()=>({
+ users:[{id:'ADMIN01',pw:'admin123',role:'admin',name:'Hospital Admin'},
+  {id:'DOC101',pw:'doc123',role:'doctor',name:'Dr. Asha Rao',spec:'Cardiology'},
+  {id:'PAT001',pw:'pat123',role:'patient',name:'Ravi Kumar'}],
+ appts:[{id:'a1',pat:'PAT001',doc:'DOC101',date:iso(1),time:'11:00',reason:'Chest pain checkup',status:'pending'}],
+ ops:[{id:'o1',doc:'DOC101',date:iso(1),start:'14:00',end:'17:00',label:'Bypass surgery'}]});
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){return seed()}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+function App(){
+ const [db,setDb]=useState(load);
+ const [me,setMe]=useState(()=>{try{return JSON.parse(localStorage.getItem(SES))}catch(e){return null}});
+ const upd=fn=>{const n=fn(JSON.parse(JSON.stringify(db)));setDb(n);store(KEY,n)};
+ const login=u=>{setMe(u);store(SES,u)};
+ const logout=()=>{setMe(null);try{localStorage.removeItem(SES)}catch(e){}};
+ const user=me&&db.users.find(u=>u.id===me.id);
+ const [mini,setMini]=useState(()=>window.innerWidth<700);
+ const bar=<div className="nav">{user&&<button className="hb" aria-label="Toggle menu" onClick={()=>setMini(!mini)}>☰</button>}<b>🏥 MediCare HMS</b>{user&&<span style={{marginLeft:'auto'}}>{user.name} ({user.role})</span>}</div>;
+ const page=!user?<Login db={db} upd={upd} onLogin={login}/>:
+   user.role==='admin'?<Admin db={db} upd={upd}/>:
+   user.role==='doctor'?<Doctor db={db} upd={upd} user={user}/>:
+   <Patient db={db} upd={upd} user={user}/>;
+ return <Ctx.Provider value={{user,logout,mini,setMini}}>
+  {user?<div className={'shell'+(mini?' mini':'')}><div className="main">{bar}{page}</div></div>:<>{bar}{page}</>}
+ </Ctx.Provider>;
+}
+
+const Ribbon=()=><svg viewBox="0 0 120 140" width="170" height="198" aria-label="Hospital ribbon"><path fill="#fff" d="M50 68 28 128l18-8 12 12 8-52zM70 68l22 60-18-8-12 12-8-52z" opacity=".85"/><path fill="#fff" fillRule="evenodd" d="M60 14C34 14 28 44 46 62l14 14 14-14C92 44 86 14 60 14zM60 28c-14 0-16 16-6 26l6 6 6-6c10-10 8-26-6-26z"/><path fill="#e03131" d="M57 35h6v7h7v6h-7v7h-6v-7h-7v-6h7z"/></svg>;
+function Login({db,upd,onLogin}){
+ const [reg,setReg]=useState(false);
+ const [f,setF]=useState({id:'',pw:'',name:''});
+ const [err,setErr]=useState('');const [done,setDone]=useState('');
+ const set=k=>e=>setF({...f,[k]:e.target.value});
+ const submit=()=>{
+  setErr('');
+  if(reg){
+   if(!f.name.trim()||f.pw.length<4)return setErr('Enter your name and a password of at least 4 characters.');
+   const n=db.users.filter(u=>u.role==='patient').length+1;
+   const id='PAT'+String(n).padStart(3,'0');
+   upd(d=>{d.users.push({id,pw:f.pw,role:'patient',name:f.name.trim()});return d});
+   setDone(id);setReg(false);setF({id,pw:'',name:''});
+  }else{
+   const u=db.users.find(x=>x.id===f.id.trim().toUpperCase()&&x.pw===f.pw);
+   if(!u)return setErr('Invalid ID or password.');
+   onLogin({id:u.id});
+  }};
+ return <div className="split">
+  <div className="left"><Ribbon/><h1>MediCare</h1><p>Hospital Management System</p></div>
+  <div className="right">
+   <div className="welcome"><h2>Welcome to MediCare Hospital</h2><p>Caring for you, every day. Sign in with your ID to manage appointments, records and schedules.</p></div>
+   <div className="formarea"><div className="card" style={{width:'100%',maxWidth:380}}>
+  <h2>{reg?'Patient registration':'Sign in'}</h2>
+  <p className="mu">{reg?'Create a patient account. Doctors are added by the admin only.':'One login for admin, doctors and patients. Your ID decides your dashboard.'}</p>
+  {done&&<div className="cred">Registered! Your patient ID is <b>{done}</b>. Use it to sign in.</div>}
+  {reg?<input placeholder="Full name" value={f.name} onChange={set('name')}/>:
+   <input placeholder="User ID (e.g. DOC101)" value={f.id} onChange={set('id')}/>}
+  <input type="password" placeholder="Password" value={f.pw} onChange={set('pw')} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+  {err&&<p className="err">{err}</p>}
+  <button style={{width:'100%'}} onClick={submit}>{reg?'Register':'Login'}</button>
+  <p style={{textAlign:'center'}}><button className="ghost" onClick={()=>{setReg(!reg);setErr('');setDone('')}}>{reg?'Back to login':'New patient? Register'}</button></p>
+  {!reg&&<p className="mu">Demo: ADMIN01 / admin123 · DOC101 / doc123 · PAT001 / pat123</p>}
+ </div></div></div></div>;
+}
+
+const Ctx=React.createContext({});
+const IC={
+ Doctors:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ 'Operation schedule':'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ Requests:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+ Timetable:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ 'Book appointment':'<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'};
+function Tabs({tabs,tab,setTab}){
+ const {user,logout,setMini}=React.useContext(Ctx);
+ return <aside className="side">
+  <div className="logo"><Ribbon/><span>MediCare</span></div>
+  <div className="who"><b>{user&&user.name}</b><div className="mu">{user&&user.role} · ID {user&&user.id}</div></div>
+  {tabs.map(t=><button key={t} title={t} className={'nv'+(t===tab?' on':'')} onClick={()=>{setTab(t);if(window.innerWidth<700)setMini(true)}}>
+   <svg viewBox="0 0 24 24" dangerouslySetInnerHTML={{__html:IC[t]||IC.list}}/><span>{t}</span></button>)}
+  <div style={{flex:1}}/>
+  <button className="nv out" title="Logout" onClick={logout}><svg viewBox="0 0 24 24" dangerouslySetInnerHTML={{__html:IC.out}}/><span>Logout</span></button>
+ </aside>;
+}
+const Badge=({s})=><span className={'badge '+s}>{s}</span>;
+const nameOf=(db,id)=>(db.users.find(u=>u.id===id)||{name:id}).name;
+
+function Admin({db,upd}){
+ const [tab,setTab]=useState('Doctors');
+ const [d,setD]=useState({name:'',spec:''});const [made,setMade]=useState(null);
+ const [o,setO]=useState({doc:'',date:iso(1),start:'09:00',end:'12:00',label:''});
+ const docs=db.users.filter(u=>u.role==='doctor');
+ const addDoc=()=>{
+  if(!d.name.trim()||!d.spec.trim())return;
+  const id='DOC'+(101+docs.length+Math.floor(Math.random()*0));
+  const uniq=db.users.some(u=>u.id===id)?'DOC'+uid().slice(0,3).toUpperCase():id;
+  const pw=Math.random().toString(36).slice(2,8);
+  upd(x=>{x.users.push({id:uniq,pw,role:'doctor',name:d.name.trim(),spec:d.spec.trim()});return x});
+  setMade({id:uniq,pw,name:d.name});setD({name:'',spec:''});
+ };
+ const addOp=()=>{
+  if(!o.doc||!o.label.trim()||mins(o.end)<=mins(o.start))return alert('Pick a doctor, add a label and a valid time range.');
+  upd(x=>{x.ops.push({...o,id:uid()});return x});setO({...o,label:''});
+ };
+ return <div className="wrap"><Tabs tabs={['Doctors','Operation schedule','All appointments']} tab={tab} setTab={setTab}/>
+  {tab==='Doctors'&&<>
+   <div className="card"><h3>Appoint a new doctor</h3>
+    <div className="grid"><input placeholder="Doctor name" value={d.name} onChange={e=>setD({...d,name:e.target.value})}/>
+    <input placeholder="Specialty" value={d.spec} onChange={e=>setD({...d,spec:e.target.value})}/></div>
+    <button onClick={addDoc}>Create doctor account</button>
+    {made&&<div className="cred">Account created for <b>{made.name}</b>. Share these credentials: ID <b>{made.id}</b> · Password <b>{made.pw}</b></div>}</div>
+   <div className="card"><h3>Doctors ({docs.length})</h3>
+    {docs.map(x=><div className="item" key={x.id}><div><b>{x.name}</b><div className="mu">{x.spec} · ID {x.id}</div></div>
+     <button className="no" onClick={()=>confirm('Remove '+x.name+'?')&&upd(z=>{z.users=z.users.filter(u=>u.id!==x.id);z.ops=z.ops.filter(p=>p.doc!==x.id);return z})}>Remove</button></div>)}</div></>}
+  {tab==='Operation schedule'&&<>
+   <div className="card"><h3>Assign operation time</h3>
+    <div className="grid"><select value={o.doc} onChange={e=>setO({...o,doc:e.target.value})}><option value="">Select doctor</option>{docs.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>
+    <input type="date" value={o.date} onChange={e=>setO({...o,date:e.target.value})}/>
+    <input type="time" value={o.start} onChange={e=>setO({...o,start:e.target.value})}/>
+    <input type="time" value={o.end} onChange={e=>setO({...o,end:e.target.value})}/>
+    <input placeholder="Operation / room" value={o.label} onChange={e=>setO({...o,label:e.target.value})}/></div>
+    <button onClick={addOp}>Add to schedule</button></div>
+   <div className="card"><h3>Scheduled operations</h3>{db.ops.length===0&&<p className="mu">None yet.</p>}
+    {[...db.ops].sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).map(x=><div className="item" key={x.id}>
+     <div><b>{x.label}</b><div className="mu">{nameOf(db,x.doc)} · {x.date} · {x.start}–{x.end}</div></div>
+     <button className="no" onClick={()=>upd(z=>{z.ops=z.ops.filter(p=>p.id!==x.id);return z})}>Delete</button></div>)}</div></>}
+  {tab==='All appointments'&&<div className="card"><h3>Appointments</h3>{db.appts.length===0&&<p className="mu">None yet.</p>}
+   {db.appts.map(a=><div className="item" key={a.id}><div><b>{nameOf(db,a.pat)}</b> → {nameOf(db,a.doc)}<div className="mu">{a.date} {a.time} · {a.reason}</div></div><Badge s={a.status}/></div>)}</div>}
+ </div>;
+}
+
+function Doctor({db,upd,user}){
+ const [tab,setTab]=useState('Requests');const [msg,setMsg]=useState('');
+ const mine=db.appts.filter(a=>a.doc===user.id);
+ const ops=db.ops.filter(p=>p.doc===user.id);
+ const conflict=a=>{
+  const s=mins(a.time),e=s+30;
+  const c1=ops.find(p=>p.date===a.date&&s<mins(p.end)&&e>mins(p.start));
+  if(c1)return 'overlaps with operation "'+c1.label+'" ('+c1.start+'–'+c1.end+')';
+  const c2=mine.find(p=>p.id!==a.id&&p.status==='accepted'&&p.date===a.date&&s<mins(p.time)+30&&e>mins(p.time));
+  return c2?'overlaps with an accepted appointment at '+c2.time:null;
+ };
+ const act=(a,status)=>{
+  if(status==='accepted'){const c=conflict(a);if(c){setMsg('Cannot accept: this slot '+c+'. Decline it or ask the patient to rebook.');return}}
+  setMsg('');upd(x=>{x.appts.find(p=>p.id===a.id).status=status;return x});
+ };
+ const days=[...Array(7)].map((_,i)=>iso(i));
+ const pending=mine.filter(a=>a.status==='pending');
+ return <div className="wrap"><Tabs tabs={['Requests','Timetable']} tab={tab} setTab={setTab}/>
+  {tab==='Requests'&&<div className="card"><h3>Appointment requests ({pending.length} pending)</h3>
+   {msg&&<p className="err">{msg}</p>}
+   {mine.length===0&&<p className="mu">No requests yet.</p>}
+   {[...mine].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(a=><div className="item" key={a.id}>
+    <div><b>{nameOf(db,a.pat)}</b><div className="mu">{a.date} at {a.time} · {a.reason}</div></div>
+    {a.status==='pending'?<div className="row"><button className="ok" onClick={()=>act(a,'accepted')}>Accept</button><button className="no" onClick={()=>act(a,'declined')}>Decline</button></div>:<Badge s={a.status}/>}</div>)}</div>}
+  {tab==='Timetable'&&<div className="card"><h3>My timetable · next 7 days</h3>
+   <p className="mu"><span className="slot op">Operation</span> <span className="slot ap">Accepted appointment (30 min)</span></p>
+   {days.map(day=>{
+    const items=[...ops.filter(p=>p.date===day).map(p=>({t:p.start,o:true,txt:p.start+'–'+p.end+' · Operation: '+p.label})),
+     ...mine.filter(a=>a.date===day&&a.status==='accepted').map(a=>({t:a.time,o:false,txt:a.time+' · '+nameOf(db,a.pat)+' ('+a.reason+')'}))].sort((a,b)=>a.t.localeCompare(b.t));
+    return <div className="item" key={day} style={{display:'block'}}><b>{new Date(day+'T00:00').toDateString()}</b>
+     {items.length===0?<div className="mu">Free</div>:items.map((x,i)=><div key={i} className={'slot '+(x.o?'op':'ap')}>{x.txt}</div>)}</div>;})}</div>}
+ </div>;
+}
+
+function Patient({db,upd,user}){
+ const docs=db.users.filter(u=>u.role==='doctor');
+ const [f,setF]=useState({doc:'',date:iso(1),time:'10:00',reason:''});
+ const [tab,setTab]=useState('Book appointment');
+ const mine=db.appts.filter(a=>a.pat===user.id);
+ const book=()=>{
+  if(!f.doc||!f.reason.trim())return alert('Choose a doctor and enter a reason.');
+  upd(x=>{x.appts.push({...f,id:uid(),pat:user.id,status:'pending'});return x});setF({...f,reason:''});
+ };
+ return <div className="wrap"><Tabs tabs={['Book appointment','My appointments']} tab={tab} setTab={setTab}/>
+  {tab==='Book appointment'&&<div className="card"><h3>Book an appointment</h3>
+   <div className="grid"><select value={f.doc} onChange={e=>setF({...f,doc:e.target.value})}><option value="">Select doctor</option>{docs.map(x=><option key={x.id} value={x.id}>{x.name} – {x.spec}</option>)}</select>
+   <input type="date" min={iso(0)} value={f.date} onChange={e=>setF({...f,date:e.target.value})}/>
+   <input type="time" value={f.time} onChange={e=>setF({...f,time:e.target.value})}/>
+   <input placeholder="Reason for visit" value={f.reason} onChange={e=>setF({...f,reason:e.target.value})}/></div>
+   <button onClick={book}>Request appointment</button></div>}
+  {tab==='My appointments'&&<div className="card"><h3>My appointments</h3>{mine.length===0&&<p className="mu">No appointments yet.</p>}
+   {mine.map(a=><div className="item" key={a.id}><div><b>{nameOf(db,a.doc)}</b><div className="mu">{a.date} {a.time} · {a.reason}</div></div><Badge s={a.status}/></div>)}</div>}
+ </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>
