@@ -1,0 +1,100 @@
+function Admin({db,upd}){
+ const [tab,setTab]=useState('Doctors');
+ const [d,setD]=useState({name:'',spec:''});const [made,setMade]=useState(null);
+ const [o,setO]=useState({doc:'',date:iso(1),start:'09:00',end:'12:00',label:''});
+ const docs=db.users.filter(u=>u.role==='doctor');
+ const addDoc=()=>{
+  if(!d.name.trim()||!d.spec.trim())return;
+  const id='DOC'+(101+docs.length+Math.floor(Math.random()*0));
+  const uniq=db.users.some(u=>u.id===id)?'DOC'+uid().slice(0,3).toUpperCase():id;
+  const pw=Math.random().toString(36).slice(2,8);
+  upd(x=>{x.users.push({id:uniq,pw,role:'doctor',name:d.name.trim(),spec:d.spec.trim()});return x});
+  setMade({id:uniq,pw,name:d.name});setD({name:'',spec:''});
+ };
+ const addOp=()=>{
+  if(!o.doc||!o.label.trim()||mins(o.end)<=mins(o.start))return alert('Pick a doctor, add a label and a valid time range.');
+  upd(x=>{x.ops.push({...o,id:uid()});return x});setO({...o,label:''});
+ };
+ return <div className="wrap"><Tabs tabs={['Doctors','Operation schedule','All appointments']} tab={tab} setTab={setTab}/>
+  {tab==='Doctors'&&<>
+   <div className="card"><h3>Appoint a new doctor</h3>
+    <div className="grid"><input placeholder="Doctor name" value={d.name} onChange={e=>setD({...d,name:e.target.value})}/>
+    <input placeholder="Specialty" value={d.spec} onChange={e=>setD({...d,spec:e.target.value})}/></div>
+    <button onClick={addDoc}>Create doctor account</button>
+    {made&&<div className="cred">Account created for <b>{made.name}</b>. Share these credentials: ID <b>{made.id}</b> · Password <b>{made.pw}</b></div>}</div>
+   <div className="card"><h3>Doctors ({docs.length})</h3>
+    {docs.map(x=><div className="item" key={x.id}><div><b>{x.name}</b><div className="mu">{x.spec} · ID {x.id}</div></div>
+     <button className="no" onClick={()=>confirm('Remove '+x.name+'?')&&upd(z=>{z.users=z.users.filter(u=>u.id!==x.id);z.ops=z.ops.filter(p=>p.doc!==x.id);return z})}>Remove</button></div>)}</div></>}
+  {tab==='Operation schedule'&&<>
+   <div className="card"><h3>Assign operation time</h3>
+    <div className="grid"><select value={o.doc} onChange={e=>setO({...o,doc:e.target.value})}><option value="">Select doctor</option>{docs.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>
+    <input type="date" value={o.date} onChange={e=>setO({...o,date:e.target.value})}/>
+    <input type="time" value={o.start} onChange={e=>setO({...o,start:e.target.value})}/>
+    <input type="time" value={o.end} onChange={e=>setO({...o,end:e.target.value})}/>
+    <input placeholder="Operation / room" value={o.label} onChange={e=>setO({...o,label:e.target.value})}/></div>
+    <button onClick={addOp}>Add to schedule</button></div>
+   <div className="card"><h3>Scheduled operations</h3>{db.ops.length===0&&<p className="mu">None yet.</p>}
+    {[...db.ops].sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).map(x=><div className="item" key={x.id}>
+     <div><b>{x.label}</b><div className="mu">{nameOf(db,x.doc)} · {x.date} · {x.start}–{x.end}</div></div>
+     <button className="no" onClick={()=>upd(z=>{z.ops=z.ops.filter(p=>p.id!==x.id);return z})}>Delete</button></div>)}</div></>}
+  {tab==='All appointments'&&<div className="card"><h3>Appointments</h3>{db.appts.length===0&&<p className="mu">None yet.</p>}
+   {db.appts.map(a=><div className="item" key={a.id}><div><b>{nameOf(db,a.pat)}</b> → {nameOf(db,a.doc)}<div className="mu">{a.date} {a.time} · {a.reason}</div></div><Badge s={a.status}/></div>)}</div>}
+ </div>;
+}
+
+function Doctor({db,upd,user}){
+ const [tab,setTab]=useState('Requests');const [msg,setMsg]=useState('');
+ const mine=db.appts.filter(a=>a.doc===user.id);
+ const ops=db.ops.filter(p=>p.doc===user.id);
+ const conflict=a=>{
+  const s=mins(a.time),e=s+30;
+  const c1=ops.find(p=>p.date===a.date&&s<mins(p.end)&&e>mins(p.start));
+  if(c1)return 'overlaps with operation "'+c1.label+'" ('+c1.start+'–'+c1.end+')';
+  const c2=mine.find(p=>p.id!==a.id&&p.status==='accepted'&&p.date===a.date&&s<mins(p.time)+30&&e>mins(p.time));
+  return c2?'overlaps with an accepted appointment at '+c2.time:null;
+ };
+ const act=(a,status)=>{
+  if(status==='accepted'){const c=conflict(a);if(c){setMsg('Cannot accept: this slot '+c+'. Decline it or ask the patient to rebook.');return}}
+  setMsg('');upd(x=>{x.appts.find(p=>p.id===a.id).status=status;return x});
+ };
+ const days=[...Array(7)].map((_,i)=>iso(i));
+ const pending=mine.filter(a=>a.status==='pending');
+ return <div className="wrap"><Tabs tabs={['Requests','Timetable']} tab={tab} setTab={setTab}/>
+  {tab==='Requests'&&<div className="card"><h3>Appointment requests ({pending.length} pending)</h3>
+   {msg&&<p className="err">{msg}</p>}
+   {mine.length===0&&<p className="mu">No requests yet.</p>}
+   {[...mine].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(a=><div className="item" key={a.id}>
+    <div><b>{nameOf(db,a.pat)}</b><div className="mu">{a.date} at {a.time} · {a.reason}</div></div>
+    {a.status==='pending'?<div className="row"><button className="ok" onClick={()=>act(a,'accepted')}>Accept</button><button className="no" onClick={()=>act(a,'declined')}>Decline</button></div>:<Badge s={a.status}/>}</div>)}</div>}
+  {tab==='Timetable'&&<div className="card"><h3>My timetable · next 7 days</h3>
+   <p className="mu"><span className="slot op">Operation</span> <span className="slot ap">Accepted appointment (30 min)</span></p>
+   {days.map(day=>{
+    const items=[...ops.filter(p=>p.date===day).map(p=>({t:p.start,o:true,txt:p.start+'–'+p.end+' · Operation: '+p.label})),
+     ...mine.filter(a=>a.date===day&&a.status==='accepted').map(a=>({t:a.time,o:false,txt:a.time+' · '+nameOf(db,a.pat)+' ('+a.reason+')'}))].sort((a,b)=>a.t.localeCompare(b.t));
+    return <div className="item" key={day} style={{display:'block'}}><b>{new Date(day+'T00:00').toDateString()}</b>
+     {items.length===0?<div className="mu">Free</div>:items.map((x,i)=><div key={i} className={'slot '+(x.o?'op':'ap')}>{x.txt}</div>)}</div>;})}</div>}
+ </div>;
+}
+
+function Patient({db,upd,user}){
+ const docs=db.users.filter(u=>u.role==='doctor');
+ const [f,setF]=useState({doc:'',date:iso(1),time:'10:00',reason:''});
+ const [tab,setTab]=useState('Book appointment');
+ const mine=db.appts.filter(a=>a.pat===user.id);
+ const book=()=>{
+  if(!f.doc||!f.reason.trim())return alert('Choose a doctor and enter a reason.');
+  upd(x=>{x.appts.push({...f,id:uid(),pat:user.id,status:'pending'});return x});setF({...f,reason:''});
+ };
+ return <div className="wrap"><Tabs tabs={['Book appointment','My appointments']} tab={tab} setTab={setTab}/>
+  {tab==='Book appointment'&&<div className="card"><h3>Book an appointment</h3>
+   <div className="grid"><select value={f.doc} onChange={e=>setF({...f,doc:e.target.value})}><option value="">Select doctor</option>{docs.map(x=><option key={x.id} value={x.id}>{x.name} – {x.spec}</option>)}</select>
+   <input type="date" min={iso(0)} value={f.date} onChange={e=>setF({...f,date:e.target.value})}/>
+   <input type="time" value={f.time} onChange={e=>setF({...f,time:e.target.value})}/>
+   <input placeholder="Reason for visit" value={f.reason} onChange={e=>setF({...f,reason:e.target.value})}/></div>
+   <button onClick={book}>Request appointment</button></div>}
+  {tab==='My appointments'&&<div className="card"><h3>My appointments</h3>{mine.length===0&&<p className="mu">No appointments yet.</p>}
+   {mine.map(a=><div className="item" key={a.id}><div><b>{nameOf(db,a.doc)}</b><div className="mu">{a.date} {a.time} · {a.reason}</div></div><Badge s={a.status}/></div>)}</div>}
+ </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>
