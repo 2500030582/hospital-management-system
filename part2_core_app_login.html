@@ -1,0 +1,97 @@
+<body><div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const {useState}=React;
+const KEY='hms_v1',SES='hms_me';
+const iso=(n=0)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const seed=()=>({
+ users:[{id:'ADMIN01',pw:'admin123',role:'admin',name:'Hospital Admin'},
+  {id:'DOC101',pw:'doc123',role:'doctor',name:'Dr. Asha Rao',spec:'Cardiology'},
+  {id:'PAT001',pw:'pat123',role:'patient',name:'Ravi Kumar'}],
+ appts:[{id:'a1',pat:'PAT001',doc:'DOC101',date:iso(1),time:'11:00',reason:'Chest pain checkup',status:'pending'}],
+ ops:[{id:'o1',doc:'DOC101',date:iso(1),start:'14:00',end:'17:00',label:'Bypass surgery'}]});
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){return seed()}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+function App(){
+ const [db,setDb]=useState(load);
+ const [me,setMe]=useState(()=>{try{return JSON.parse(localStorage.getItem(SES))}catch(e){return null}});
+ const upd=fn=>{const n=fn(JSON.parse(JSON.stringify(db)));setDb(n);store(KEY,n)};
+ const login=u=>{setMe(u);store(SES,u)};
+ const logout=()=>{setMe(null);try{localStorage.removeItem(SES)}catch(e){}};
+ const user=me&&db.users.find(u=>u.id===me.id);
+ const [mini,setMini]=useState(()=>window.innerWidth<700);
+ const bar=<div className="nav">{user&&<button className="hb" aria-label="Toggle menu" onClick={()=>setMini(!mini)}>☰</button>}<b>🏥 MediCare HMS</b>{user&&<span style={{marginLeft:'auto'}}>{user.name} ({user.role})</span>}</div>;
+ const page=!user?<Login db={db} upd={upd} onLogin={login}/>:
+   user.role==='admin'?<Admin db={db} upd={upd}/>:
+   user.role==='doctor'?<Doctor db={db} upd={upd} user={user}/>:
+   <Patient db={db} upd={upd} user={user}/>;
+ return <Ctx.Provider value={{user,logout,mini,setMini}}>
+  {user?<div className={'shell'+(mini?' mini':'')}><div className="main">{bar}{page}</div></div>:<>{bar}{page}</>}
+ </Ctx.Provider>;
+}
+
+const Ribbon=()=><svg viewBox="0 0 120 140" width="170" height="198" aria-label="Hospital ribbon"><path fill="#fff" d="M50 68 28 128l18-8 12 12 8-52zM70 68l22 60-18-8-12 12-8-52z" opacity=".85"/><path fill="#fff" fillRule="evenodd" d="M60 14C34 14 28 44 46 62l14 14 14-14C92 44 86 14 60 14zM60 28c-14 0-16 16-6 26l6 6 6-6c10-10 8-26-6-26z"/><path fill="#e03131" d="M57 35h6v7h7v6h-7v7h-6v-7h-7v-6h7z"/></svg>;
+function Login({db,upd,onLogin}){
+ const [reg,setReg]=useState(false);
+ const [f,setF]=useState({id:'',pw:'',name:''});
+ const [err,setErr]=useState('');const [done,setDone]=useState('');
+ const set=k=>e=>setF({...f,[k]:e.target.value});
+ const submit=()=>{
+  setErr('');
+  if(reg){
+   if(!f.name.trim()||f.pw.length<4)return setErr('Enter your name and a password of at least 4 characters.');
+   const n=db.users.filter(u=>u.role==='patient').length+1;
+   const id='PAT'+String(n).padStart(3,'0');
+   upd(d=>{d.users.push({id,pw:f.pw,role:'patient',name:f.name.trim()});return d});
+   setDone(id);setReg(false);setF({id,pw:'',name:''});
+  }else{
+   const u=db.users.find(x=>x.id===f.id.trim().toUpperCase()&&x.pw===f.pw);
+   if(!u)return setErr('Invalid ID or password.');
+   onLogin({id:u.id});
+  }};
+ return <div className="split">
+  <div className="left"><Ribbon/><h1>MediCare</h1><p>Hospital Management System</p></div>
+  <div className="right">
+   <div className="welcome"><h2>Welcome to MediCare Hospital</h2><p>Caring for you, every day. Sign in with your ID to manage appointments, records and schedules.</p></div>
+   <div className="formarea"><div className="card" style={{width:'100%',maxWidth:380}}>
+  <h2>{reg?'Patient registration':'Sign in'}</h2>
+  <p className="mu">{reg?'Create a patient account. Doctors are added by the admin only.':'One login for admin, doctors and patients. Your ID decides your dashboard.'}</p>
+  {done&&<div className="cred">Registered! Your patient ID is <b>{done}</b>. Use it to sign in.</div>}
+  {reg?<input placeholder="Full name" value={f.name} onChange={set('name')}/>:
+   <input placeholder="User ID (e.g. DOC101)" value={f.id} onChange={set('id')}/>}
+  <input type="password" placeholder="Password" value={f.pw} onChange={set('pw')} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+  {err&&<p className="err">{err}</p>}
+  <button style={{width:'100%'}} onClick={submit}>{reg?'Register':'Login'}</button>
+  <p style={{textAlign:'center'}}><button className="ghost" onClick={()=>{setReg(!reg);setErr('');setDone('')}}>{reg?'Back to login':'New patient? Register'}</button></p>
+  {!reg&&<p className="mu">Demo: ADMIN01 / admin123 · DOC101 / doc123 · PAT001 / pat123</p>}
+ </div></div></div></div>;
+}
+
+const Ctx=React.createContext({});
+const IC={
+ Doctors:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ 'Operation schedule':'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ Requests:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+ Timetable:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ 'Book appointment':'<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'};
+function Tabs({tabs,tab,setTab}){
+ const {user,logout,setMini}=React.useContext(Ctx);
+ return <aside className="side">
+  <div className="logo"><Ribbon/><span>MediCare</span></div>
+  <div className="who"><b>{user&&user.name}</b><div className="mu">{user&&user.role} · ID {user&&user.id}</div></div>
+  {tabs.map(t=><button key={t} title={t} className={'nv'+(t===tab?' on':'')} onClick={()=>{setTab(t);if(window.innerWidth<700)setMini(true)}}>
+   <svg viewBox="0 0 24 24" dangerouslySetInnerHTML={{__html:IC[t]||IC.list}}/><span>{t}</span></button>)}
+  <div style={{flex:1}}/>
+  <button className="nv out" title="Logout" onClick={logout}><svg viewBox="0 0 24 24" dangerouslySetInnerHTML={{__html:IC.out}}/><span>Logout</span></button>
+ </aside>;
+}
+const Badge=({s})=><span className={'badge '+s}>{s}</span>;
+const nameOf=(db,id)=>(db.users.find(u=>u.id===id)||{name:id}).name;
+
